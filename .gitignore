@@ -1,0 +1,6 @@
+*.py[cod]
+.tox/
+.dmypy.json
+.coverage*
+__pycache__/
+dist/
