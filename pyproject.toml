@@ -12,16 +12,14 @@ packages = [
 keywords = ["deterministic", "hash"]
 classifiers = [
 			"Development Status :: 4 - Beta",
-			"Operating System :: MacOS",
-			"Operating System :: Microsoft :: Windows",
-			"Operating System :: POSIX :: Linux",
+			"Operating System :: OS Independent",
 			"Topic :: Software Development :: Libraries",
 ]
 
 [tool.poetry.dependencies]
 python = "^3.7"
 # make sure to keep the Python versions here consistent with those tested by Tox (tool.tox.legacy_tox_ini.tox.envlist).
-xxhash = "^2.0.2"
+xxhash = {git = "https://github.com/ifduyue/python-xxhash"}
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.910"
@@ -34,18 +32,19 @@ black = "^21.10b0"
 pytest-cov = "^3.0.0"
 tox = "^3.24.4"
 radon = "^5.1.0"
-coverage = "^6.1.1"
+coverage = {extras = ["toml"], version = "^6.1.2"}
 ipython = "^7.29.0"
 termcolor = "^1.1.0"
 twine = "^3.5.0"
 "charmonium.async-subprocess" = "^0.1.7"
 typing-extensions = "^3.10.0"
-pytest-parallel = "^0.1.1"
 toml = "^0.10.2"
 Sphinx = "^4.2.0"
 sphinx-autodoc-typehints = "^1.12.0"
 sphinxcontrib-spelling = "^7.2.1"
 proselint = "^0.13.0"
+pytest-xdist = {extras = ["psutil"], version = "^2.4.0"}
+pytest-sugar = "^0.9.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -53,6 +52,24 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.isort]
 profile = "black"
+
+[tool.pytest.ini_options]
+addopts = "--quiet --numprocesses=auto --doctest-modules --doctest-glob='*.rst'"
+
+[tool.coverage.report]
+# Regexes for lines to exclude from consideration
+exclude_lines = [
+    'pragma: no cover',
+    'def __repr__',
+    'if self\.debug',
+    'raise AssertionError',
+    'raise NotImplementedError',
+    'if False:',
+    'if __name__ == .__main__.:',
+    '@(abc\.)?abstractmethod',
+    '\w*\.\.\.$',
+    '\w*pass$',
+]
 
 # [tool.pylint]
 # Too long for inclusion here
@@ -65,7 +82,7 @@ profile = "black"
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py{37,38,39}
+envlist = py{37,38,39,310}
 # Make sure to install the Python versions listed here in the Nix flake.
 isolated_build = True
 
@@ -74,5 +91,5 @@ whitelist_externals = poetry
 skip_install = true
 commands =
     poetry install
-    poetry run pytest --quiet
+    {toxinidir}/script.py per-env-tests
 """

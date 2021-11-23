@@ -5,13 +5,16 @@ from __future__ import annotations
 import asyncio
 import datetime
 import multiprocessing
+import os
 import shlex
 import shutil
 import subprocess
+import sys
 from enum import Enum
 from functools import wraps
 from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Awaitable,
     Callable,
     Iterable,
@@ -46,7 +49,10 @@ def coroutine_to_function(
     return wrapper
 
 
-CompletedProc = subprocess.CompletedProcess[str]
+if TYPE_CHECKING:
+    CompletedProc = subprocess.CompletedProcess[str]
+else:
+    CompletedProc = object
 
 
 def default_checker(proc: CompletedProc) -> bool:
@@ -67,7 +73,10 @@ async def pretty_run(
     delta = stop - start
     success = checker(proc)
     color = "green" if success else "red"
-    cmd_str = shlex.join(map(str, cmd))
+    if sys.version_info >= (3, 8):
+        cmd_str = shlex.join(map(str, cmd))
+    else:
+        cmd_str = " ".join(map(str, cmd))
     cprint(
         f"$ {cmd_str}\nexited with status {proc.returncode} in {delta.total_seconds():.1f}s",
         color,
@@ -107,13 +116,14 @@ src_packages = setuptools.find_packages() + extra_packages
 main_package = most_recent_common_ancestor(src_packages)
 assert main_package, f"No common ancestor of {src_packages}"
 main_package_dir = get_package_path(main_package)
+docsrc_dir = Path("docsrc")
 build_dir = Path("build")
 all_python_files = list(
     {
         *tests_dir.rglob("*.py"),
         *main_package_dir.rglob("*.py"),
         Path("script.py"),
-        Path("docsrc/conf.py"),
+        # docsrc_dir / "conf.py",
     }
 )
 
@@ -142,10 +152,17 @@ async def fmt(parallel: bool = True) -> None:
 
 @app.command()
 @coroutine_to_function
-async def tests() -> None:
+async def test() -> None:
     await asyncio.gather(
         pretty_run(
-            ["dmypy", "run", "--", *all_python_files],
+            [
+                "dmypy",
+                "run",
+                "--",
+                "--explicit-package-bases",
+                "--namespace-packages",
+                *all_python_files,
+            ],
             env_override={"MYPY_FORCE_COLOR": "1"},
         ),
         pretty_run(
@@ -161,7 +178,7 @@ async def tests() -> None:
             # see https://pylint.pycqa.org/en/latest/user_guide/run.html#exit-codes
             checker=lambda proc: proc.returncode & (1 | 2) == 0,
         ),
-        pytest(use_coverage=True),
+        pytest(use_coverage=True, show_slow=True),
         pretty_run(
             [
                 "radon",
@@ -195,10 +212,15 @@ async def per_env_tests() -> None:
     await asyncio.gather(
         pretty_run(
             # No daemon
-            ["mypy", *all_python_files],
+            [
+                "mypy",
+                "--explicit-package-bases",
+                "--namespace-packages",
+                *map(str, all_python_files),
+            ],
             env_override={"MYPY_FORCE_COLOR": "1"},
         ),
-        pytest(use_coverage=False),
+        pytest(use_coverage=False, show_slow=False),
     )
 
 
@@ -209,8 +231,16 @@ async def docs() -> None:
 
 
 async def docs_inner() -> None:
-    await pretty_run(["sphinx-build", "-W", "-b", "html", "docsrc", "docs"])
-    print(f"See docs in: file://{(Path() / 'docs' / 'index.html').resolve()}")
+    await asyncio.gather(
+        *(
+            [pretty_run(["sphinx-build", "-W", "-b", "html", docsrc_dir, "docs"])]
+            if docsrc_dir.exists()
+            else []
+        ),
+        pretty_run(["proselint", "--config", "proselint.json", "README.rst", *docsrc_dir.glob("*.rst")]),
+    )
+    if docsrc_dir.exists():
+        print(f"See docs in: file://{(Path() / 'docs' / 'index.html').resolve()}")
 
 
 @app.command()
@@ -224,36 +254,42 @@ async def all_tests_inner() -> None:
         dist = Path("dist")
         if dist.exists():
             shutil.rmtree(dist)
-        await pretty_run(["poetry", "build"])
+        await pretty_run(["poetry", "build", "--quiet"])
         await pretty_run(["twine", "check", *dist.iterdir()])
         shutil.rmtree(dist)
 
     await asyncio.gather(
         poetry_build(),
-        pretty_run(["tox"], env_override={"PY_COLORS": "1"}),
         docs_inner(),
-        pretty_run(["proselint", "README.rst", *Path("docsrc").glob("*.rst")]),
+    )
+    # Tox already has its own parallelism,
+    # and it shows a nice stateus spinner.
+    # so I'll not `await pretty_run`
+    subprocess.run(
+        ["tox", "--quiet", "--parallel", "auto"],
+        env={**os.environ, "PY_COLORS": "1"},
+        check=True,
     )
 
 
-async def pytest(use_coverage: bool) -> None:
-    await pretty_run(
-        [
-            "pytest",
-            "--color=yes",
-            "--quiet",
-            "--exitfirst",
-            "--workers=auto",
-            "--doctest-modules",
-            "--doctest-glob='*.rst'",
-            *([f"--cov={main_package_dir!s}"] if use_coverage else []),
-        ]
-    )
-    if use_coverage:
-        await pretty_run(["coverage", "html", "--directory", build_dir / "coverage"])
-        print(
-            f"See code coverage in: file://{(build_dir / 'coverage' / 'index.html').resolve()}"
+async def pytest(use_coverage: bool, show_slow: bool) -> None:
+    if tests_dir.exists():
+        await pretty_run(
+            [
+                "pytest",
+                "--exitfirst",
+                *(["--durations=3"] if show_slow else []),
+                *([f"--cov={main_package_dir!s}"] if use_coverage else []),
+            ],
+            checker=lambda proc: proc.returncode in {0, 5},
         )
+        if use_coverage:
+            await pretty_run(
+                ["coverage", "html", "--directory", build_dir / "coverage"]
+            )
+            print(
+                f"See code coverage in: file://{(build_dir / 'coverage' / 'index.html').resolve()}"
+            )
 
 
 class VersionPart(str, Enum):
