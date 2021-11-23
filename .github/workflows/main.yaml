@@ -9,5 +9,5 @@ jobs:
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
-      - run: nix develop --command poetry run ./script.sh all-tests
+      - run: nix --extra-experimental-features nix-command develop --command poetry run ./script.sh all-tests
         # TODO: use `nix flake check`
