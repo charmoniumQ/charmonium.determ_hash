@@ -319,7 +319,6 @@ def dct_to_args(dct: Mapping[str, Union[bool, int, float, str]]) -> List[str]:
     return list(flatten1(inner()))
 
 @app.command()
-@coroutine_to_function
 def publish(version_part: VersionPart, verify: bool = True, bump: bool = True) -> None:
     asyncio.run(all_tests_inner() if verify else docs_inner())
     if bump:
