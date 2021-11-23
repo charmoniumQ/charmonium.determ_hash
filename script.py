@@ -320,21 +320,25 @@ def dct_to_args(dct: Mapping[str, Union[bool, int, float, str]]) -> List[str]:
 
 @app.command()
 @coroutine_to_function
-async def publish(version_part: VersionPart, verify: bool = True) -> None:
-    await (all_tests_inner() if verify else docs_inner())
-    await pretty_run([
-        "bump2version",
-        *dct_to_args(pyproject["tool"]["bump2version"]),
-        version_part.value,
-        "pyproject.toml",
-        *[
-            str(Path(package) / "__init__.py")
-            for package in src_packages
-            if (Path(package) / "__init__.py").exists()
-        ],
-    ])
-    await pretty_run(["poetry", "publish", "--build"])
-    await pretty_run(["git", "push", "--tags"])
+def publish(version_part: VersionPart, verify: bool = True, bump: bool = True) -> None:
+    asyncio.run(all_tests_inner() if verify else docs_inner())
+    if bump:
+        subprocess.run([
+            "bump2version",
+            *dct_to_args(pyproject["tool"]["bump2version"]),
+            version_part.value,
+            "pyproject.toml",
+            *[
+                str(Path(package) / "__init__.py")
+                for package in src_packages
+                if (Path(package) / "__init__.py").exists()
+            ],
+        ])
+    subprocess.run(
+        ["poetry", "publish", "--build"],
+        check=True,
+    )
+    subprocess.run(["git", "push", "--tags"], check=True)
     # TODO: publish docs
 
 

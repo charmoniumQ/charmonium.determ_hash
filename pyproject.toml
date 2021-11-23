@@ -19,7 +19,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.7"
 # make sure to keep the Python versions here consistent with those tested by Tox (tool.tox.legacy_tox_ini.tox.envlist).
-xxhash = {git = "https://github.com/ifduyue/python-xxhash"}
+xxhash = "^2.0.2"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.910"
