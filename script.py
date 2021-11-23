@@ -299,29 +299,39 @@ class VersionPart(str, Enum):
 
 
 T = TypeVar("T")
-def flatten1(seq: Sequence[Sequence[T]]) -> Sequence[T]:
-    return [
+def flatten1(seq: Iterable[Iterable[T]]) -> Iterable[T]:
+    return (
         item2
         for item1 in seq
         for item2 in item1
-    ]
+    )
 
+
+def dct_to_args(dct: Mapping[str, Union[bool, int, float, str]]) -> List[str]:
+    def inner() -> Iterable[List[str]]:
+        for key, val in dct.items():
+            key = key.replace("_", "-")
+            if isinstance(val, bool):
+                modifier = "" if val else "no-"
+                yield [f"--{modifier}{key}"]
+            else:
+                yield [f"--{key}", str(val)]
+    return list(flatten1(inner()))
 
 @app.command()
 @coroutine_to_function
 async def publish(version_part: VersionPart, verify: bool = True) -> None:
     await (all_tests_inner() if verify else docs_inner())
-    if (await pretty_run(["git", "status", "--porcelain"])).stdout:
-        raise RuntimeError("git status is not clean")
     await pretty_run([
         "bump2version",
-        *flatten1([
-            (f"--{key.replace('_', '-')}", val)
-            for key, val in pyproject["tool"]["bump2version"]
-        ]),
+        *dct_to_args(pyproject["tool"]["bump2version"]),
         version_part.value,
         "pyproject.toml",
-        main_package / "__init__.py",
+        *[
+            str(Path(package) / "__init__.py")
+            for package in src_packages
+            if (Path(package) / "__init__.py").exists()
+        ],
     ])
     await pretty_run(["poetry", "publish", "--build"])
     await pretty_run(["git", "push", "--tags"])
