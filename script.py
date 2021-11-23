@@ -298,13 +298,31 @@ class VersionPart(str, Enum):
     MAJOR = "major"
 
 
+T = TypeVar("T")
+def flatten1(seq: Sequence[Sequence[T]]) -> Sequence[T]:
+    return [
+        item2
+        for item1 in seq
+        for item2 in item1
+    ]
+
+
 @app.command()
 @coroutine_to_function
 async def publish(version_part: VersionPart, verify: bool = True) -> None:
     await (all_tests_inner() if verify else docs_inner())
     if (await pretty_run(["git", "status", "--porcelain"])).stdout:
         raise RuntimeError("git status is not clean")
-    await pretty_run(["bump2version", version_part.value])
+    await pretty_run([
+        "bump2version",
+        *flatten1([
+            (f"--{key.replace('_', '-')}", val)
+            for key, val in pyproject["tool"]["bump2version"]
+        ]),
+        version_part.value,
+        "pyproject.toml",
+        main_package / "__init__.py",
+    ])
     await pretty_run(["poetry", "publish", "--build"])
     await pretty_run(["git", "push", "--tags"])
     # TODO: publish docs

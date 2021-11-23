@@ -79,6 +79,11 @@ exclude_lines = [
 # Too long for inclusion here
 # see mypy.ini
 
+[tool.bump2version]
+current_version = "0.1.0"
+commit = true
+tag = true
+
 [tool.tox]
 legacy_tox_ini = """
 [tox]
