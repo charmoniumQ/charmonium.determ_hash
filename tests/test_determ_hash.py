@@ -18,6 +18,8 @@ values: List[Hashable] = [
     12,
     12.0,
     12 + 0j,
+    (b"a", b"bc"),
+    (b"ab", b"c"),
     (1, 2, 3),
     ((1, 2, 3)),
     ((1, 2), 3),
@@ -77,9 +79,9 @@ def test_raises() -> None:
 
 
 def test_logs(caplog: pytest.LogCaptureFixture) -> None:
-    with caplog.at_level(logging.INFO, logger="charmonium.cache.determ_hash"):
+    with caplog.at_level(logging.INFO, logger="charmonium.determ_hash"):
         determ_hash(frozenset({(1, "hello")}))
     assert not caplog.text
-    with caplog.at_level(logging.DEBUG, logger="charmonium.cache.determ_hash"):
-        determ_hash(frozenset({(1, "hello")}))
-    assert caplog.text
+    with caplog.at_level(logging.DEBUG, logger="charmonium.determ_hash"):
+        determ_hash(frozenset({(1, b"hello")}))
+    assert "hello" in caplog.text

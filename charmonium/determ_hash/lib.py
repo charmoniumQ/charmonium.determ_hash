@@ -3,20 +3,18 @@ from __future__ import annotations
 import functools
 import logging
 import struct
-import textwrap
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable, FrozenSet, Hashable, Tuple, cast
 
 import xxhash  # type: ignore
 
+logger = logging.getLogger("charmonium.determ_hash")
+
+
 if TYPE_CHECKING:
     from typing import Protocol
-
 else:
     Protocol = object
-
-
-logger = logging.getLogger("charmonium.cache.determ_hash")
 
 
 class Hasher(Protocol):
@@ -66,39 +64,24 @@ def determ_hash(obj: Hashable) -> int:
 
     """
     hasher = config.hasher()
-    logger.debug("determ_hash begin")
     _determ_hash(obj, hasher, 0)
-    logger.debug("determ_hash end")
     return intdigest(hasher)
 
 
-def _determ_hash(obj: Any, hasher: Hasher, level: int) -> None:
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug(
-            " ".join(
-                [
-                    level * " ",
-                    type(obj).__name__,
-                    textwrap.shorten(repr(obj), width=100),
-                ]
-            )
-        )
-    __determ_hash(obj, hasher, level)
-
-
 @functools.singledispatch
-def __determ_hash(obj: Any, hasher: Hasher, level: int) -> None:
+def _determ_hash(obj: Any, hasher: Hasher, level: int) -> None:
     raise TypeError(f"{obj} ({type(obj)}) is not determ_hashable")
 
 
 # pylint: disable=unused-argument
-@__determ_hash.register(type(None))
+@_determ_hash.register(type(None))
 def _(obj: None, hasher: Hasher, level: int) -> None:
     hasher.update(b"n")
+    logger.debug("n")
 
 
 # pylint: disable=unused-argument
-@__determ_hash.register(bytes)
+@_determ_hash.register(bytes)
 def _(obj: bytes, hasher: Hasher, level: int) -> None:
     # Naively, hash of empty containers output might map to 0.
     # But empty is a popular input.
@@ -110,54 +93,72 @@ def _(obj: bytes, hasher: Hasher, level: int) -> None:
     hasher.update(b"b(")
     hasher.update(obj)
     hasher.update(b")")
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug("b(")
+        logger.debug(str(obj)[2:-1])
+        logger.debug(")")
 
 
 # pylint: disable=unused-argument
-@__determ_hash.register
+@_determ_hash.register
 def _(obj: str, hasher: Hasher, level: int) -> None:
     hasher.update(b"s(")
     hasher.update(obj.encode())
     hasher.update(b")")
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug("s(")
+        logger.debug(obj)
+        logger.debug(")")
 
 
 # pylint: disable=unused-argument
-@__determ_hash.register
+@_determ_hash.register
 def _(obj: int, hasher: Hasher, level: int) -> None:
-    hasher.update(b"i(")
-    hasher.update(
-        obj.to_bytes(
-            length=(8 + (obj + (obj < 0)).bit_length()) // 8,
-            byteorder="big",
-            signed=True,
-        )
+    buffer = obj.to_bytes(
+        length=(8 + (obj + (obj < 0)).bit_length()) // 8,
+        byteorder="big",
+        signed=True,
     )
+    hasher.update(b"i(")
+    hasher.update(buffer)
     hasher.update(")")
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug("i(")
+        logger.debug(str(buffer)[2:-1])
+        logger.debug(")")
 
 
 # pylint: disable=unused-argument
-@__determ_hash.register
+@_determ_hash.register
 def _(obj: float, hasher: Hasher, level: int) -> None:
+    buffer = struct.pack("!d", obj)
     # These types are fixed-size, so no need for `b"( + ... + b")"`.
     hasher.update(b"f")
-    hasher.update(struct.pack("!d", obj))
+    hasher.update(buffer)
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug("f")
+        logger.debug(str(buffer)[2:-1])
 
 
-@__determ_hash.register
+@_determ_hash.register
 def _(obj: complex, hasher: Hasher, level: int) -> None:
     hasher.update(b"c")
+    logger.debug("c")
     _determ_hash(obj.imag, hasher, level + 1)
     _determ_hash(obj.real, hasher, level + 1)
 
 
-@__determ_hash.register(tuple)
+@_determ_hash.register(tuple)
 def _(obj: Tuple[Any], hasher: Hasher, level: int) -> None:
     hasher.update(b"t(")
+    logger.debug("t(")
     for elem in cast(Tuple[Hashable], obj):
         _determ_hash(elem, hasher, level + 1)
     hasher.update(b")")
+    logger.debug(")")
 
 
-@__determ_hash.register(frozenset)
+@_determ_hash.register(frozenset)
 def _(obj: FrozenSet[Any], hasher: Hasher, level: int) -> None:
     # The order of objects in a frozenset does not matter.
     # I would like to `hash(sorted(obj))`, but the elements of obj might not be comparable.
@@ -171,6 +172,7 @@ def _(obj: FrozenSet[Any], hasher: Hasher, level: int) -> None:
     _determ_hash(tuple(sorted(elem_hashes)), hasher, level + 1)
 
 
-@__determ_hash.register(type(...))
+@_determ_hash.register(type(...))
 def _(obj: Any, hasher: Hasher, level: int) -> None:
     hasher.update(b".")
+    logger.debug(".")
