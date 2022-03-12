@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "charmonium.determ_hash"
-version = "0.2.0"
+version = "0.2.1"
 description = ""
 authors = ["Samuel Grayson <grayson5@illinois.edu>"]
 license = "MIT"
@@ -101,7 +101,7 @@ disable_error_code = "no-redef"
 #mypy_path = stubs
 
 [tool.bump2version]
-current_version = "0.2.0"
+current_version = "0.2.1"
 commit = true
 tag = true
 
