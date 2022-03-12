@@ -1,6 +1,5 @@
-*.py[cod]
-.tox/
-.dmypy.json
-.coverage*
+/build/
 __pycache__/
-dist/
+/.tox/
+/.direnv/
+

@@ -86,7 +86,7 @@ async def pretty_run(
     if proc.stderr:
         print(proc.stderr)
     if not success:
-        raise RuntimeError()
+        raise typer.Exit(code=1)
     return proc
 
 
@@ -128,9 +128,13 @@ all_python_files = list(
 )
 
 
-def run_autoimport(path: Path) -> None:
-    with path.open("r+") as file:
-        autoimport.fix_files([file])  # type: ignore
+def autoimport_and_isort(path: Path) -> None:
+    orig_code = path.read_text()
+    code = autoimport.fix_code(orig_code)
+    code = isort.code(code)
+    # if hash(code) != hash(orig_code):
+    #     path.write_text(code)
+    path.write_text(code)
 
 
 T1 = TypeVar("T1")
@@ -140,13 +144,12 @@ T2 = TypeVar("T2")
 @app.command()
 @coroutine_to_function
 async def fmt(parallel: bool = True) -> None:
-    pool = multiprocessing.Pool()
-    mapper = cast(
-        Callable[[Callable[[T1], T2], Iterable[T1]], Iterable[T2]],
-        pool.imap_unordered if parallel else map,
-    )
-    list(mapper(run_autoimport, all_python_files))
-    list(mapper(isort.file, all_python_files))
+    with multiprocessing.Pool() as pool:
+        mapper = cast(
+            Callable[[Callable[[T1], T2], Iterable[T1]], Iterable[T2]],
+            pool.imap_unordered if parallel else map,
+        )
+        list(mapper(autoimport_and_isort, all_python_files))
     await pretty_run(["black", "--quiet", *all_python_files])
 
 
@@ -156,9 +159,10 @@ async def test() -> None:
     await asyncio.gather(
         pretty_run(
             [
-                "dmypy",
-                "run",
-                "--",
+                "mypy",
+                # "dmypy",
+                # "run",
+                # "--",
                 "--explicit-package-bases",
                 "--namespace-packages",
                 *all_python_files,
@@ -237,7 +241,15 @@ async def docs_inner() -> None:
             if docsrc_dir.exists()
             else []
         ),
-        pretty_run(["proselint", "--config", "proselint.json", "README.rst", *docsrc_dir.glob("*.rst")]),
+        pretty_run(
+            [
+                "proselint",
+                "--config",
+                "proselint.json",
+                "README.rst",
+                *docsrc_dir.glob("*.rst"),
+            ]
+        ),
     )
     if docsrc_dir.exists():
         print(f"See docs in: file://{(Path() / 'docs' / 'index.html').resolve()}")
@@ -245,29 +257,35 @@ async def docs_inner() -> None:
 
 @app.command()
 @coroutine_to_function
-async def all_tests() -> None:
-    await all_tests_inner()
+async def all_tests(interactive: bool = True) -> None:
+    await all_tests_inner(interactive)
 
 
-async def all_tests_inner() -> None:
+async def all_tests_inner(interactive: bool) -> None:
     async def poetry_build() -> None:
         dist = Path("dist")
         if dist.exists():
             shutil.rmtree(dist)
+        await pretty_run(["rstcheck", "README.rst"])
         await pretty_run(["poetry", "build", "--quiet"])
-        await pretty_run(["twine", "check", *dist.iterdir()])
+        await pretty_run(["twine", "check", "--strict", *dist.iterdir()])
         shutil.rmtree(dist)
 
     await asyncio.gather(
         poetry_build(),
         docs_inner(),
+        pytest(use_coverage=False, show_slow=False),
     )
     # Tox already has its own parallelism,
     # and it shows a nice stateus spinner.
     # so I'll not `await pretty_run`
     subprocess.run(
-        ["tox", "--quiet", "--parallel", "auto"],
-        env={**os.environ, "PY_COLORS": "1"},
+        ["tox", "--parallel", "auto"],
+        env={
+            **os.environ,
+            "PY_COLORS": "1",
+            "TOX_PARALLEL_NO_SPINNER": "" if interactive else "1"
+        },
         check=True,
     )
 
@@ -284,11 +302,9 @@ async def pytest(use_coverage: bool, show_slow: bool) -> None:
             checker=lambda proc: proc.returncode in {0, 5},
         )
         if use_coverage:
-            await pretty_run(
-                ["coverage", "html", "--directory", build_dir / "coverage"]
-            )
+            await pretty_run(["coverage", "html"])
             print(
-                f"See code coverage in: file://{(build_dir / 'coverage' / 'index.html').resolve()}"
+                f"See code coverage in: file://{(build_dir / 'htmlcov' / 'index.html').resolve()}"
             )
 
 
@@ -299,12 +315,10 @@ class VersionPart(str, Enum):
 
 
 T = TypeVar("T")
+
+
 def flatten1(seq: Iterable[Iterable[T]]) -> Iterable[T]:
-    return (
-        item2
-        for item1 in seq
-        for item2 in item1
-    )
+    return (item2 for item1 in seq for item2 in item1)
 
 
 def dct_to_args(dct: Mapping[str, Union[bool, int, float, str]]) -> List[str]:
@@ -316,27 +330,35 @@ def dct_to_args(dct: Mapping[str, Union[bool, int, float, str]]) -> List[str]:
                 yield [f"--{modifier}{key}"]
             else:
                 yield [f"--{key}", str(val)]
+
     return list(flatten1(inner()))
+
 
 @app.command()
 def publish(version_part: VersionPart, verify: bool = True, bump: bool = True) -> None:
-    asyncio.run(all_tests_inner() if verify else docs_inner())
+    asyncio.run(all_tests_inner(True) if verify else docs_inner())
     if bump:
-        subprocess.run([
-            "bump2version",
-            *dct_to_args(pyproject["tool"]["bump2version"]),
-            version_part.value,
-            "pyproject.toml",
-            *[
-                str(Path(package) / "__init__.py")
-                for package in src_packages
-                if (Path(package) / "__init__.py").exists()
+        subprocess.run(
+            [
+                "bump2version",
+                *dct_to_args(pyproject["tool"]["bump2version"]),
+                "--current-version",
+                pyproject["tool"]["poetry"]["version"],
+                version_part.value,
+                "pyproject.toml",
+                *[
+                    str(Path(package.replace(".", "/")) / "__init__.py")
+                    for package in src_packages
+                    if (Path(package.replace(".", "/")) / "__init__.py").exists()
+                ],
             ],
-        ])
+            check=True,
+        )
     subprocess.run(
         ["poetry", "publish", "--build"],
         check=True,
     )
+    shutil.rmtree("dist")
     subprocess.run(["git", "push", "--tags"], check=True)
     # TODO: publish docs
 

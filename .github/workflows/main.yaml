@@ -1,13 +1,22 @@
 on: [push, pull_request]
 jobs:
-  minimal:
+  all-tests:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
 
-      - uses: cachix/install-nix-action@v13
+    steps:
+
+      - uses: cachix/install-nix-action@v15
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
-      - run: nix --extra-experimental-features nix-command develop --command poetry run ./script.sh all-tests
-        # TODO: use `nix flake check`
+      - uses: actions/checkout@v2
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            build/
+            .tox/
+            $HOME/.cache/pypoetry/
+          key: venv-${{ hashFiles('poetry.lock') }}-${{ hashFiles('pyproject.toml') }}
+
+      - run: nix develop --command ./script.py all-tests --no-interactive
