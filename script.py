@@ -305,7 +305,7 @@ async def pytest(use_coverage: bool, show_slow: bool) -> None:
         if use_coverage:
             await pretty_run(["coverage", "html"])
             print(
-                f"See code coverage in: file://{(build_dir / 'htmlcov' / 'index.html').resolve()}"
+                f"See code coverage in: file://{(build_dir / 'coverage' / 'index.html').resolve()}"
             )
 
 
