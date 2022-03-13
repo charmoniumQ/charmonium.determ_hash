@@ -77,7 +77,8 @@ def _determ_hash(obj: Any, hasher: Hasher, level: int) -> None:
 @_determ_hash.register(type(None))
 def _(obj: None, hasher: Hasher, level: int) -> None:
     hasher.update(b"n")
-    logger.debug("n")
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug(level * " " + "n")
 
 
 # pylint: disable=unused-argument
@@ -94,9 +95,7 @@ def _(obj: bytes, hasher: Hasher, level: int) -> None:
     hasher.update(obj)
     hasher.update(b")")
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("b(")
-        logger.debug(str(obj)[2:-1])
-        logger.debug(")")
+        logger.debug(level * " " + "b(" + str(obj)[2:-1] + ")")
 
 
 # pylint: disable=unused-argument
@@ -106,9 +105,8 @@ def _(obj: str, hasher: Hasher, level: int) -> None:
     hasher.update(obj.encode())
     hasher.update(b")")
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("s(")
-        logger.debug(obj)
-        logger.debug(")")
+        logger.debug(level * " " + "s(" + obj + ")")
+
 
 
 # pylint: disable=unused-argument
@@ -123,9 +121,7 @@ def _(obj: int, hasher: Hasher, level: int) -> None:
     hasher.update(buffer)
     hasher.update(")")
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("i(")
-        logger.debug(str(buffer)[2:-1])
-        logger.debug(")")
+        logger.debug(level * " " + "i(" + str(buffer)[2:-1] + ")")
 
 
 # pylint: disable=unused-argument
@@ -136,14 +132,14 @@ def _(obj: float, hasher: Hasher, level: int) -> None:
     hasher.update(b"f")
     hasher.update(buffer)
     if logger.isEnabledFor(logging.DEBUG):
-        logger.debug("f")
-        logger.debug(str(buffer)[2:-1])
+        logger.debug(level * " " + "f" + str(buffer)[2:-1])
 
 
 @_determ_hash.register
 def _(obj: complex, hasher: Hasher, level: int) -> None:
     hasher.update(b"c")
-    logger.debug("c")
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug(level * " " + "c")
     _determ_hash(obj.imag, hasher, level + 1)
     _determ_hash(obj.real, hasher, level + 1)
 
@@ -151,11 +147,13 @@ def _(obj: complex, hasher: Hasher, level: int) -> None:
 @_determ_hash.register(tuple)
 def _(obj: Tuple[Any], hasher: Hasher, level: int) -> None:
     hasher.update(b"t(")
-    logger.debug("t(")
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug(level * " " + "t(")
     for elem in cast(Tuple[Hashable], obj):
         _determ_hash(elem, hasher, level + 1)
     hasher.update(b")")
-    logger.debug(")")
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug(level * " " + ")")
 
 
 @_determ_hash.register(frozenset)
@@ -175,4 +173,5 @@ def _(obj: FrozenSet[Any], hasher: Hasher, level: int) -> None:
 @_determ_hash.register(type(...))
 def _(obj: Any, hasher: Hasher, level: int) -> None:
     hasher.update(b".")
-    logger.debug(".")
+    if logger.isEnabledFor(logging.DEBUG):
+        logger.debug(level * " " + ".")
