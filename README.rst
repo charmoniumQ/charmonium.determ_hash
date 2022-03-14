@@ -2,22 +2,36 @@
 charmonium.determ_hash
 ==========================
 
-.. image: https://img.shields.io/pypi/dm/charmonium.determ_hash
+.. image:: https://img.shields.io/pypi/v/charmonium.determ_hash
+   :alt: PyPI Package
+   :target: https://pypi.org/project/charmonium.determ_hash
+.. image:: https://img.shields.io/pypi/dm/charmonium.determ_hash
    :alt: PyPI Downloads
-.. image: https://img.shields.io/pypi/l/charmonium.determ_hash
-   :alt: PyPI Downloads
-.. image: https://img.shields.io/pypi/pyversions/charmonium.determ_hash
-   :alt: Python versions
-.. image: https://img.shields.io/github/stars/charmoniumQ/charmonium.determ_hash?style=social
+   :target: https://pypi.org/project/charmonium.determ_hash
+.. image:: https://img.shields.io/pypi/l/charmonium.determ_hash
+   :alt: PyPI License
+.. image:: https://img.shields.io/pypi/pyversions/charmonium.determ_hash
+   :alt: Python Versions
+.. image:: https://img.shields.io/github/stars/charmoniumQ/charmonium.determ_hash?style=social
    :alt: GitHub stars
-.. image: https://img.shields.io/librariesio/sourcerank/pypi/charmonium.determ_hash
+   :target: https://github.com/charmoniumQ/charmonium.determ_hash.git
+.. image:: https://github.com/charmoniumQ/charmonium.determ_hash.git/actions/workflows/main.yaml/badge.svg
+   :alt: CI status
+   :target: https://github.com/charmoniumQ/charmonium.determ_hash.git/actions/workflows/main.yaml
+.. image:: https://img.shields.io/github/last-commit/charmoniumQ/charmonium.determ_hash
+   :alt: GitHub last commit
+   :target: https://github.com/charmoniumQ/charmonium.determ_hash.git/commits
+.. image:: https://img.shields.io/librariesio/sourcerank/pypi/charmonium.determ_hash
    :alt: libraries.io sourcerank
-
-- `PyPI`_
-- `GitHub`_
-
-.. _`PyPI`: https://pypi.org/project/charmonium.determ_hash
-.. _`GitHub`: https://github.com/charmoniumQ/charmonium.determ_hash.git
+   :target: https://libraries.io/pypi/charmonium.determ_hash
+.. image:: https://img.shields.io/badge/docs-yes-success
+   :alt: Documentation link
+.. image:: http://www.mypy-lang.org/static/mypy_badge.svg
+   :target: https://mypy.readthedocs.io/en/stable/
+   :alt: Checked with Mypy
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+   :target: https://github.com/psf/black
+   :alt: Code style: black
 
 A deterministic hash for arbitray objects
 
@@ -30,13 +44,16 @@ algorithm, which is the fastest non-cryptographic hash I know of.
 Quickstart
 ----------
 
+If you don't have ``pip`` installed, see the `pip install
+guide`_.
+
+.. _`pip install guide`: https://pip.pypa.io/en/latest/installing/
+
 .. code-block:: console
 
     $ pip install charmonium.determ_hash
 
-.. highlight:: python
-
->>> import charmonium.determ_hash
+>>> from charmonium.determ_hash import determ_hash
 >>> determ_hash(b"hello world")
 141361478936837800319111455324245712876
 

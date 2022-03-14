@@ -9,9 +9,12 @@
     "__year": "2022",
     "repo_user": "charmoniumQ",
     "repo_url": "https://github.com/charmoniumQ/charmonium.determ_hash.git",
-    "keywords": "deterministic hash",
     "version": "0.2.2",
-    "trove_classifiers": "Development Status :: 4 - Beta,Operating System :: OS Independent,Topic :: Software Development :: Libraries",
+    "keywords": "deterministic hash",
+    "trove_intended_audience": "Intended Audience :: Science/Research,Intended Audience :: Developers",
+    "trove_license": "License :: OSI Approved :: MIT License",
+    "trove_topics": "Topic :: Scientific/Engineering,Topic :: Software Development :: Libraries :: Python Modules",
+    "trove_classifiers": "",
     "nix_dependencies": "pkgs.libseccomp.lib pkgs.gcc-unwrapped.lib"
   },
   "comment": "This repository was created from a template in <https://github.com/charmoniumQ/sams-cookiecutter-pypackage.git> with these options. Use `cookiecutter gh:charmoniumQ/sams-cookiecutter-pypackage.git --output-dir . --overwrite-if-exists --reply --replay-file cookiecutter_replay.json` to regenerate."

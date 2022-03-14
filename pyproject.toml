@@ -1,3 +1,27 @@
+[tool.poetry]
+name = "charmonium.determ_hash"
+version = "0.2.2"
+description = "A deterministic hash for arbitray objects"
+authors = ["Samuel Grayson <sam@samgrayson.me>"]
+license = "MIT"
+readme = "README.rst"
+repository = "https://github.com/charmoniumQ/charmonium.determ_hash.git"
+packages = [
+    { include = "charmonium" },
+]
+keywords = ["deterministic", "hash"]
+classifiers = [
+	"Operating System :: OS Independent",
+	"Typing :: Typed",
+	"Natural Language :: English",
+	"Development Status :: 4 - Beta",
+	"License :: OSI Approved :: MIT License",
+	"Intended Audience :: Science/Research",
+	"Intended Audience :: Developers",
+	"Topic :: Scientific/Engineering",
+	"Topic :: Software Development :: Libraries :: Python Modules",
+]
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
@@ -63,11 +87,6 @@ commands =
     {toxinidir}/script.py per-env-tests
 """
 
-[tool.poetry.dependencies]
-python = "^3.7"
-# make sure to keep the Python versions here consistent with those tested by Tox (tool.tox.legacy_tox_ini.tox.envlist).
-xxhash = "^2.0.2"
-
 [tool.poetry.dev-dependencies]
 autoimport = "^0.7.5"
 isort = "^5.10.0"
@@ -92,20 +111,7 @@ ipython = "^7.29.0"
 ipdb = "^0.13.9"
 # rest
 
-[tool.poetry]
-name = "charmonium.determ_hash"
-version = "0.2.2"
-description = "A deterministic hash for arbitray objects"
-authors = ["Samuel Grayson <sam@samgrayson.me>"]
-license = "MIT"
-readme = "README.rst"
-repository = "https://github.com/charmoniumQ/charmonium.determ_hash.git"
-packages = [
-    { include = "charmonium" },
-]
-keywords = ["deterministic", "hash"]
-classifiers = [
-	"Development Status :: 4 - Beta",
-	"Operating System :: OS Independent",
-	"Topic :: Software Development :: Libraries",
-]
+[tool.poetry.dependencies]
+python = "^3.7"
+# make sure to keep the Python versions here consistent with those tested by Tox (tool.tox.legacy_tox_ini.tox.envlist).
+xxhash = "^2.0.2"
