@@ -1,0 +1,18 @@
+{
+  "cookiecutter": {
+    "repo_name": "charmonium.determ_hash",
+    "package_name": "charmonium.determ_hash",
+    "description": "A deterministic hash for arbitray objects",
+    "author_name": "Samuel Grayson",
+    "author_email": "sam@samgrayson.me",
+    "license": "MIT",
+    "__year": "2022",
+    "repo_user": "charmoniumQ",
+    "repo_url": "https://github.com/charmoniumQ/charmonium.determ_hash.git",
+    "keywords": "deterministic hash",
+    "version": "0.2.2",
+    "trove_classifiers": "Development Status :: 4 - Beta,Operating System :: OS Independent,Topic :: Software Development :: Libraries",
+    "nix_dependencies": "pkgs.libseccomp.lib pkgs.gcc-unwrapped.lib"
+  },
+  "comment": "This repository was created from a template in <https://github.com/charmoniumQ/sams-cookiecutter-pypackage.git> with these options. Use `cookiecutter gh:charmoniumQ/sams-cookiecutter-pypackage.git --output-dir . --overwrite-if-exists --reply --replay-file cookiecutter_replay.json` to regenerate."
+}

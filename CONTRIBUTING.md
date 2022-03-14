@@ -1,129 +1,61 @@
+# How to setup the development environment
 
-# Contributor Covenant Code of Conduct
+## With Nix
 
-## Our Pledge
+[Nix][nix] is a language-agnostic package manager that installs packages locally. [Nix Flakes][nix flakes] are a way of specifying dependencies to Nix declaraively. Currently, they are [installed separately][install nix flakes].
 
-We as members, contributors, and leaders pledge to make participation in our
-community a harassment-free experience for everyone, regardless of age, body
-size, visible or invisible disability, ethnicity, sex characteristics, gender
-identity and expression, level of experience, education, socio-economic status,
-nationality, personal appearance, race, religion, or sexual identity
-and orientation.
+- `nix develop` to get a shell.
+- `nix develop --command ipython` to run a command, such as `ipython`, in the project's environment.
 
-We pledge to act and interact in ways that contribute to an open, welcoming,
-diverse, inclusive, and healthy community.
+[nix]: https://nixos.org/
+[nix flakes]: https://nixos.wiki/wiki/Flakes
+[install nix flakes]: https://nixos.wiki/wiki/Flakes#Installing_flakes
 
-## Our Standards
+## With Nix and direnv
 
-Examples of behavior that contributes to a positive environment for our
-community include:
+In addition to Nix, I suggest also installing [direnv][direnv] and [nix-direnv][nix-direnv]. Then simply `cd`ing to the project will activate the project-specific environment.
 
-* Demonstrating empathy and kindness toward other people
-* Being respectful of differing opinions, viewpoints, and experiences
-* Giving and gracefully accepting constructive feedback
-* Accepting responsibility and apologizing to those affected by our mistakes,
-  and learning from the experience
-* Focusing on what is best not just for us as individuals, but for the
-  overall community
+- `cd /path/to/project` to get a shell.
+- `nix develop --command ipython` to run a command, such as `ipython`, in the project's environment.
 
-Examples of unacceptable behavior include:
+Consider adding this line in your shell's initfile so you can see when `direnv` is activated. `PS1="\$PREPEND_TO_PS1$PS1"` Note that the sigil (dollar sign) in `$PREPEND_TO_PS1` is quoted but the one in `$PS1` is not, so `PS1` is evaluated when the shell initializes, but `PREPEND_TO_PS1` is evaluated before every prompt.
 
-* The use of sexualized language or imagery, and sexual attention or
-  advances of any kind
-* Trolling, insulting or derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others' private information, such as a physical or email
-  address, without their explicit permission
-* Other conduct which could reasonably be considered inappropriate in a
-  professional setting
+[direnv]: https://direnv.net/
+[nix-direnv]: https://github.com/nix-community/nix-direnv
 
-## Enforcement Responsibilities
+## With Poetry
 
-Community leaders are responsible for clarifying and enforcing our standards of
-acceptable behavior and will take appropriate and fair corrective action in
-response to any behavior that they deem inappropriate, threatening, offensive,
-or harmful.
+Nix can be trouble to set up, so here is how to use the project without Nix. [Poetry][poetry] is a wrapper around `pip`/`virtualenv`, and it will manage dependencies from PyPI, but *you* have to manage external dependencies, e.g. installing the right version of Python, C libraries, etc. Poetry can be installed globally with `python -m pip install poetry`.
 
-Community leaders have the right and responsibility to remove, edit, or reject
-comments, commits, code, wiki edits, issues, and other contributions that are
-not aligned to this Code of Conduct, and will communicate reasons for moderation
-decisions when appropriate.
+- `poetry shell` to get a shell.
+- `poetry run ipython` to run a command, such as `ipython`, in the project's environment.
 
-## Scope
+[poetry]: https://python-poetry.org/
 
-This Code of Conduct applies within all community spaces, and also applies when
-an individual is officially representing the community in public spaces.
-Examples of representing our community include using an official e-mail address,
-posting via an official social media account, or acting as an appointed
-representative at an online or offline event.
+# How to use development tools
 
-## Enforcement
+Once in the development environment, use `./script.py` to run development tools. In the order of usefulness,
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement at
-[INSERT CONTACT METHOD].
-All complaints will be reviewed and investigated promptly and fairly.
+- `./script.py fmt` runs code formatters ([autoimport][autoimport], [isort][isort], [black][black]).
 
-All community leaders are obligated to respect the privacy and security of the
-reporter of any incident.
+- `./script.py test` runs tests and code complexity analysis ([mypy][mypy], [pylint][pylint], [pytest][pytest], [coverage.py][coverage], [radon][radon] in parallel).
 
-## Enforcement Guidelines
+- `./script.py all-tests` runs the usual tests and more ([proselint][proselint], [rstcheck][rstcheck], [twine][twine], [tox][tox] (which runs [mypy][mypy] and [pytest][pytest] in each env)). This is intended for CI.
 
-Community leaders will follow these Community Impact Guidelines in determining
-the consequences for any action they deem in violation of this Code of Conduct:
+- `./script.py docs` builds the documentation locally ([proselint][proselint]).
 
-### 1. Correction
+- `./script.py publish` publishes the package to PyPI and deploys the documentation to GitHub pages (`./scripts.py all-tests`, [bump2version][bump2version], poetry publish, git push).
 
-**Community Impact**: Use of inappropriate language or other behavior deemed
-unprofessional or unwelcome in the community.
-
-**Consequence**: A private, written warning from community leaders, providing
-clarity around the nature of the violation and an explanation of why the
-behavior was inappropriate. A public apology may be requested.
-
-### 2. Warning
-
-**Community Impact**: A violation through a single incident or series
-of actions.
-
-**Consequence**: A warning with consequences for continued behavior. No
-interaction with the people involved, including unsolicited interaction with
-those enforcing the Code of Conduct, for a specified period of time. This
-includes avoiding interactions in community spaces as well as external channels
-like social media. Violating these terms may lead to a temporary or
-permanent ban.
-
-### 3. Temporary Ban
-
-**Community Impact**: A serious violation of community standards, including
-sustained inappropriate behavior.
-
-**Consequence**: A temporary ban from any sort of interaction or public
-communication with the community for a specified period of time. No public or
-private interaction with the people involved, including unsolicited interaction
-with those enforcing the Code of Conduct, is allowed during this period.
-Violating these terms may lead to a permanent ban.
-
-### 4. Permanent Ban
-
-**Community Impact**: Demonstrating a pattern of violation of community
-standards, including sustained inappropriate behavior,  harassment of an
-individual, or aggression toward or disparagement of classes of individuals.
-
-**Consequence**: A permanent ban from any sort of public interaction within
-the community.
-
-## Attribution
-
-This Code of Conduct is adapted from the [Contributor Covenant][homepage],
-version 2.0, available at
-https://www.contributor-covenant.org/version/2/0/code_of_conduct.html.
-
-Community Impact Guidelines were inspired by [Mozilla's code of conduct
-enforcement ladder](https://github.com/mozilla/diversity).
-
-[homepage]: https://www.contributor-covenant.org
-
-For answers to common questions about this code of conduct, see the FAQ at
-https://www.contributor-covenant.org/faq. Translations are available at
-https://www.contributor-covenant.org/translations.
+[autoimport]: https://lyz-code.github.io/autoimport/
+[isort]: https://pycqa.github.io/isort/
+[black]: https://black.readthedocs.io/en/stable/
+[mypy]: https://mypy.readthedocs.io/en/stable/
+[pylint]: https://pylint.org/
+[pytest]: https://docs.pytest.org/en/7.0.x/
+[coverage.py]: https://coverage.readthedocs.io/en/6.1.1/index.html
+[radon]: https://radon.readthedocs.io/en/latest/
+[proselint]: http://proselint.com/
+[rstcheck]: https://github.com/myint/rstcheck
+[twine]: https://twine.readthedocs.io/en/stable/
+[tox]: https://tox.wiki/en/latest/
+[bump2version]: https://github.com/c4urself/bump2version

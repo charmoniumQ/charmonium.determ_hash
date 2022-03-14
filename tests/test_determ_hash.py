@@ -79,7 +79,7 @@ def test_raises() -> None:
 
 
 def test_logs(caplog: pytest.LogCaptureFixture) -> None:
-    obj = frozenset({(1, b"hello", 1j, ...)})
+    obj = frozenset({(1, b"hello", 1j, ..., None, "world")})
     with caplog.at_level(logging.INFO, logger="charmonium.determ_hash"):
         determ_hash(obj)
     assert not caplog.text

@@ -7,11 +7,12 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        name = "charmonium.determ_hash";
+        pyproject = builtins.fromTOML(builtins.readFile(./pyproject.toml));
+        name = pyproject.tool.poetry.name;
         name-pure-shell = "${name}-pure-shell";
         name-shell = "${name}-shell";
         name-test = "${name}-test";
-        default-python = pkgs.python39;
+        default-python = pkgs.python310;
         # Alternative Pythons for Tox
         alternative-pythons = [
           pkgs.python37

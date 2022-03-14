@@ -1,6 +1,6 @@
-======================
+==========================
 charmonium.determ_hash
-======================
+==========================
 
 .. image: https://img.shields.io/pypi/dm/charmonium.determ_hash
    :alt: PyPI Downloads
@@ -16,18 +16,27 @@ charmonium.determ_hash
 - `PyPI`_
 - `GitHub`_
 
-.. _`PyPI`: https://pypi.org/project/charmonium.determ_hash/
-.. _`GitHub`: https://github.com/charmoniumQ/charmonium.determ_hash
+.. _`PyPI`: https://pypi.org/project/charmonium.determ_hash
+.. _`GitHub`: https://github.com/charmoniumQ/charmonium.determ_hash.git
 
-This library provides a deterministic hash for Python objects. |hash|_ will give
-different results each process invocation, in order to thwart denial-of-service
-attacks based on intentionally triggering hash collisions (see ``-R`` in
-`Python's CLI options`_). Even setting ``PYTHONHASHSEED`` is not enough, because
-the hash can still use non-deterministic data such as pointer-addresses. By
-default, this package uses the `xxhash`_ algorithm, which is the fastest
-non-cryptographic hash I know of.
+A deterministic hash for arbitray objects
 
->>> from charmonium.determ_hash import determ_hash
+Python's default |hash|_ will give different results each process invocation, in order to thwart
+denial-of-service attacks based on intentionally triggering hash collisions (see ``-R`` in `Python's
+CLI options`_). Even setting ``PYTHONHASHSEED`` is not enough, because the hash can still use
+non-deterministic data such as pointer-addresses. By default, this package uses the `xxhash`_
+algorithm, which is the fastest non-cryptographic hash I know of.
+
+Quickstart
+----------
+
+.. code-block:: console
+
+    $ pip install charmonium.determ_hash
+
+.. highlight:: python
+
+>>> import charmonium.determ_hash
 >>> determ_hash(b"hello world")
 141361478936837800319111455324245712876
 

@@ -26,7 +26,7 @@ from typing import (
     cast,
 )
 
-import autoimport
+#import autoimport
 import isort
 import setuptools  # type: ignore
 import toml  # type: ignore
@@ -304,8 +304,9 @@ async def pytest(use_coverage: bool, show_slow: bool) -> None:
         )
         if use_coverage:
             await pretty_run(["coverage", "html"])
+            report_dir = Path(pyproject["tool"]["coverage"]["html"]["directory"])
             print(
-                f"See code coverage in: file://{(build_dir / 'coverage' / 'index.html').resolve()}"
+                f"See code coverage in: file://{(report_dir / 'index.html').resolve()}"
             )
 
 
